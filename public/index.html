@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráfica de Distancia</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        canvas {
+            width: 100%; /* Usar todo el ancho del contenedor */
+            max-width: 1200px; /* Máximo ancho de la gráfica */
+            max-height: 600px; /* Máximo alto de la gráfica */
+        }
+    </style>
+</head>
+<body>
+    <h1>Gráfica de Distancia</h1>
+    <canvas id="myChart"></canvas>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const ctx = document.getElementById('myChart').getContext('2d');
+        let timeData = [];
+        let distanceData = [];
+        let chart;
+
+        socket.on('sensorData', (data) => {
+            timeData.push(data.time);
+            distanceData.push(data.distance);
+
+            if (timeData.length > 100) { // Mantener solo las últimas 100 lecturas
+                timeData.shift();
+                distanceData.shift();
+            }
+
+            if (!chart) {
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: timeData,
+                        datasets: [{
+                            label: 'Distancia (cm)',
+                            data: distanceData,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderWidth: 1,
+                            fill: true,
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Tiempo (s)',
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Distancia (cm)',
+                                },
+                                suggestedMin: 0,
+                                suggestedMax: 80,
+                            }
+                        },
+                        animation: {
+                            duration: 0 // Sin animación para actualizaciones rápidas
+                        }
+                    }
+                });
+            } else {
+                chart.update();
+            }
+        });
+    </script>
+</body>
+</html>
